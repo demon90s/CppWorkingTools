@@ -2,6 +2,19 @@
 #include <sstream>
 #include <cassert>
 
+#include "stringcommon/stringcommon.hpp"
+void Test_stringcommon()
+{
+	std::string str = "hello";
+	assert(stringcommon::Trim(str) == "hello");
+	
+	str = " hello";
+	assert(stringcommon::Trim(str) == "hello");
+
+	str = "   hello  ";
+	assert(stringcommon::Trim(str) == "hello");
+}
+
 #include "configstruct/attributepairconfig.hpp"
 void Test_AttributePairConfig()
 {
@@ -76,6 +89,7 @@ void Test_ServerOpenDayConfig()
 
 int main()
 {
+	Test_stringcommon();
 	Test_AttributePairConfig();
 	Test_ServerOpenDayConfig();
 

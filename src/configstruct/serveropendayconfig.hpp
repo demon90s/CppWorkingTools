@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-// ¿ª·şÊ±¼äÅäÖÃ
-// ¸ñÊ½£ºbegin_time,end_time
-// Àı×Ó£º1,7
+// å¼€æœæ—¶é—´é…ç½®
+// æ ¼å¼ï¼šbegin_time,end_time
+// ä¾‹å­ï¼š1,7
 
 struct ServerOpenDayConfig
 {

@@ -4,9 +4,9 @@
 #include <vector>
 #include <iostream>
 
-// ½ÇÉ«ÊôĞÔÅäÖÃ
-// ¸ñÊ½£»attr_str=attr_value[, ...]
-// Àı×Ó£ºgongji=1000, fangyu=2000
+// è§’è‰²å±æ€§é…ç½®
+// æ ¼å¼ï¼›attr_str=attr_value[, ...]
+// ä¾‹å­ï¼šgongji=1000, fangyu=2000
 
 struct AttributePairConfig
 {
