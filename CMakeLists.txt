@@ -8,6 +8,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Linux
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Windows
+    set(LIBS gtestd.lib)
+    add_definitions(/MTd)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
