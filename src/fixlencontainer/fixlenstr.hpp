@@ -17,7 +17,7 @@ public:
     FixLenStr(const char *str) :
         FixLenStr()
     {
-        strncpy(m_data, str, LEN);
+        memcpy(m_data, str, LEN);
         m_data[LEN - 1] = 0;
     }
 
@@ -65,7 +65,7 @@ public:
 
     FixLenStr &operator=(const char *str)
     {
-        strncpy(m_data, str, LEN);
+        memcpy(m_data, str, LEN);
         m_data[LEN - 1] = 0;
         return *this;
     }

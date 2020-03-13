@@ -252,6 +252,44 @@ TEST(Test_FixLenStr, test)
     ASSERT_EQ(str.Len(), 5);
 }
 
+#include "tools/misc.hpp"
+TEST(Misc, StringToType)
+{
+	std::string s = "42";
+	int i;
+
+	ASSERT_TRUE(StringToType(s, i));
+	ASSERT_EQ(i, 42);
+
+	s = "3.14";
+	double d;
+	ASSERT_TRUE(StringToType(s, d));
+	ASSERT_DOUBLE_EQ(d, 3.14);
+
+	s = "3.14a";
+	ASSERT_FALSE(StringToType(s, d));
+
+	s = "b42";
+	ASSERT_FALSE(StringToType(s, i));
+
+	std::string s_v;
+	ASSERT_TRUE(StringToType(s, s_v));
+	ASSERT_STREQ(s.c_str(), s_v.c_str());
+}
+
+TEST(Misc, TypeToString)
+{
+	std::string s;
+	int i = 42;
+
+	ASSERT_TRUE(TypeToString(i, s));
+	ASSERT_STREQ(s.c_str(), "42");
+
+	double d = 3.14;
+	ASSERT_TRUE(TypeToString(d, s));
+	ASSERT_STREQ(s.c_str(), "3.14");
+}
+
 int main(int argc, char *argv[])
 {
 	testing::InitGoogleTest(&argc, argv);
