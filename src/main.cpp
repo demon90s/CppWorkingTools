@@ -290,6 +290,20 @@ TEST(Misc, TypeToString)
 	ASSERT_STREQ(s.c_str(), "3.14");
 }
 
+TEST(Misc, IsNumber)
+{
+	double d;
+	ASSERT_TRUE(IsNumber("42", &d));
+	ASSERT_DOUBLE_EQ(d, 42);
+
+	ASSERT_TRUE(IsNumber("3.14", &d));
+	ASSERT_DOUBLE_EQ(d, 3.14);
+
+	ASSERT_FALSE(IsNumber("  3.45  "));
+	ASSERT_FALSE(IsNumber("abc"));
+	ASSERT_FALSE(IsNumber("12a3"));
+}
+
 int main(int argc, char *argv[])
 {
 	testing::InitGoogleTest(&argc, argv);
