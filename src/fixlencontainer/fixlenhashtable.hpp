@@ -8,7 +8,7 @@
 // 插入读取常数效率
 
 #include <functional>
-#include "Bitset.hpp"
+#include "bitset.hpp"
 
 template<typename Key, typename Value, int Len>
 class FixLenHashTable

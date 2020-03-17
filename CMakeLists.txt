@@ -18,6 +18,8 @@ endfunction(group_by_dir)
 set(LIBS "")
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # Linux
+	set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
+	set(LIBS gtest pthread)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Windows
     set(LIBS gtestd.lib)

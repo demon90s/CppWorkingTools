@@ -19,7 +19,7 @@ void TraceBack()
 #endif
 	std::vector<std::string> frames = stringcommon::Split(out, "\n");
 
-	for (int i = 0; i < frames.size(); ++i)
+	for (int i = 0; i < static_cast<int>(frames.size()); ++i)
 	{
 		printf("#%d: %s\n", i, frames[i].c_str());
 	}

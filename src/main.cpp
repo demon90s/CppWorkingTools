@@ -324,6 +324,7 @@ TEST(Misc, IsNumber)
 	ASSERT_FALSE(IsNumber("12a3"));
 }
 
+/*
 #include "3rd/str_bkdr.hpp"
 TEST(ThirdPart, STR_BKDR)
 {
@@ -336,6 +337,7 @@ TEST(ThirdPart, STR_BKDR)
 	default: { assert(0); } break;
 	}
 }
+*/
 
 int main(int argc, char *argv[])
 {
