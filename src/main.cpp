@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 
 #include "stringcommon/stringcommon.hpp"
-TEST(Test_stringcommon, test1)
+TEST(stringcommon, Trim)
 {
 	std::string str = "hello";
 	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello");
@@ -16,6 +16,26 @@ TEST(Test_stringcommon, test1)
 
 	str = "";
 	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "");
+}
+
+TEST(stringcommon, Format)
+{
+	std::string s = stringcommon::Format("hello, x=%d, y=%g", 42, 3.14);
+	ASSERT_STREQ(s.c_str(), "hello, x=42, y=3.14");
+}
+
+TEST(stringcommon, Split)
+{
+	std::vector<std::string> splits = stringcommon::Split("hello:world:123:3.14", ":");
+	ASSERT_EQ(splits.size(), 4);
+	ASSERT_STREQ(splits[0].c_str(), "hello");
+	ASSERT_STREQ(splits[2].c_str(), "123");
+
+	splits = stringcommon::Split("1:2:3:", ":");
+	ASSERT_EQ(splits.size(), 3);
+
+	splits = stringcommon::Split("::123:", ":");
+	ASSERT_EQ(splits.size(), 3);
 }
 
 #include "configstruct/attributepairconfig.hpp"
@@ -252,7 +272,7 @@ TEST(Test_FixLenStr, test)
     ASSERT_EQ(str.Len(), 5);
 }
 
-#include "tools/misc.hpp"
+#include "tools/misc/misc.hpp"
 TEST(Misc, StringToType)
 {
 	std::string s = "42";
@@ -302,6 +322,19 @@ TEST(Misc, IsNumber)
 	ASSERT_FALSE(IsNumber("  3.45  "));
 	ASSERT_FALSE(IsNumber("abc"));
 	ASSERT_FALSE(IsNumber("12a3"));
+}
+
+#include "3rd/str_bkdr.hpp"
+TEST(ThirdPart, STR_BKDR)
+{
+	std::string s = "hello";
+	ASSERT_EQ(TypicalBKDR(s.c_str()), "hello"_bkdr);
+
+	switch (TypicalBKDR(s.c_str()))
+	{
+	case "hello"_bkdr: break;	// hit
+	default: { assert(0); } break;
+	}
 }
 
 int main(int argc, char *argv[])
