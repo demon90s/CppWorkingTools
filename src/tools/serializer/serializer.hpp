@@ -64,7 +64,7 @@ private:
 		m_len *= 2;
 	}
 
-	size_t m_len;					// buffer长度
+	int m_len;						// buffer长度
 	char m_rawbuffer[DEFAULT_LEN];	// 初始buffer，用完才用heap memory
 	char *m_buffer;					// 用于存储序列化数据的缓冲区，自动增长
 	char *m_cur_pos;				// 当前序列化的位置
@@ -123,7 +123,7 @@ private:
 	DeSerializer(const DeSerializer&) = delete;
 	DeSerializer& operator=(const DeSerializer&) = delete;
 
-	const size_t m_max_len;			// buffer最大长度
+	const int m_max_len;			// buffer最大长度
 	const char *const m_buffer;		// 用于反序列化数据的缓冲区
 	const char *m_cur_pos;			// 当前反序列化的位置
 	unsigned int m_state_flag;		// 状态标记

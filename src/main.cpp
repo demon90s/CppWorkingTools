@@ -434,14 +434,14 @@ struct SerFoo
 #include "tools/buffer.hpp"
 Serializer& operator<<(Serializer &s, const SerFoo &v)
 {
-	int len = sizeof(v);
+	unsigned int len = sizeof(v);
 	s << len;
 	s.Write(v);
 	return s;
 }
 DeSerializer& operator>>(DeSerializer& d, SerFoo& v)
 {
-	int len;
+	unsigned int len;
 	d >> len;
 	Buffer buffer(len);
 	d.ReadData(buffer.Data(), len);
@@ -477,12 +477,8 @@ TEST(Tools, Serializer6)
 #include "tools/buffer.hpp"
 TEST(Tools, Buffer)
 {
-	Buffer buffer;
 	std::string hello = "hello";
-	while (buffer.Size() < hello.size())
-	{
-		buffer.Reallocate();
-	}
+	Buffer buffer(hello.size());
 	strncpy(buffer.Data(), hello.c_str(), hello.size());
 
 	ASSERT_STREQ(buffer.Data(), "hello");
