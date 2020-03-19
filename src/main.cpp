@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include "gtest/gtest.h"
 
 #include "stringcommon/stringcommon.hpp"
@@ -16,6 +17,9 @@ TEST(stringcommon, Trim)
 
 	str = "";
 	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "");
+
+	str = "hello world   ";
+	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello world");
 }
 
 TEST(stringcommon, Format)
@@ -322,6 +326,166 @@ TEST(Misc, IsNumber)
 	ASSERT_FALSE(IsNumber("  3.45  "));
 	ASSERT_FALSE(IsNumber("abc"));
 	ASSERT_FALSE(IsNumber("12a3"));
+}
+
+#include "tools/serializer/serializer.hpp"
+TEST(Tools, Serializer)
+{
+	Serializer ser;
+	char buffer[32] = "hello";
+	ser.Write(42, 3.14, buffer);	 // 4 + 8 + 32 = 44
+
+	ASSERT_EQ(ser.Size(), 44);
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	int a;
+	double d;
+	de.Read(a, d, buffer);
+
+	ASSERT_EQ(a, 42);
+	ASSERT_DOUBLE_EQ(d, 3.14);
+	ASSERT_STREQ(buffer, "hello");
+
+	de.Read(a);
+	ASSERT_TRUE(de.Eof());
+}
+
+TEST(Tools, Serializer2)
+{
+	Serializer ser;
+	char buffer[32] = "hello";
+	ser << 42 << 3.14 << buffer;	// 4 + 8 + (4+5) = 21
+
+	ASSERT_EQ(ser.Size(), 21);
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	int a;
+	double d;
+	memset(buffer, 0, sizeof(buffer));
+	de >> a >> d >> buffer;
+
+	ASSERT_EQ(a, 42);
+	ASSERT_DOUBLE_EQ(d, 3.14);
+	ASSERT_STREQ(buffer, "hello");
+}
+
+TEST(Tools, Serializer3)
+{
+	Serializer ser;
+	std::string s = "hello";	// 4 + 5 = 9
+	ser << s;
+
+	ASSERT_EQ(ser.Size(), 9);
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	s = "";
+	de >> s;
+
+	ASSERT_STREQ(s.c_str(), "hello");
+}
+
+TEST(Tools, Serializer4)
+{
+	Serializer ser;
+	std::vector<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
+	ser << vi;
+
+	ASSERT_EQ(ser.Size(), 20);
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	vi = {};
+	ASSERT_EQ(vi.size(), 0);
+
+	de >> vi;
+
+	ASSERT_EQ(vi.size(), 4);
+	ASSERT_TRUE(vi[0] == 1 && vi[1] == 2 && vi[2] == 3 && vi[3] == 4);
+}
+
+TEST(Tools, Serializer5)
+{
+	Serializer ser;
+	std::map<int, std::string> cache =
+	{
+		{1, "one"},
+		{2, "two"},
+		{3, "three"},
+	};
+	ser << cache; // 4 + (4+4+3) + (4+4+3) + (4+4+5) = 39
+
+	ASSERT_EQ(ser.Size(), 39);
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	cache.clear();
+	de >> cache;
+
+	ASSERT_EQ(cache.size(), 3);
+	ASSERT_STREQ(cache[1].c_str(), "one");
+	ASSERT_STREQ(cache[2].c_str(), "two");
+	ASSERT_STREQ(cache[3].c_str(), "three");
+}
+
+struct SerFoo
+{
+	int a;
+	double d;
+};
+
+#include "tools/buffer.hpp"
+Serializer& operator<<(Serializer &s, const SerFoo &v)
+{
+	int len = sizeof(v);
+	s << len;
+	s.Write(v);
+	return s;
+}
+DeSerializer& operator>>(DeSerializer& d, SerFoo& v)
+{
+	int len;
+	d >> len;
+	Buffer buffer(len);
+	d.ReadData(buffer.Data(), len);
+	if (sizeof(v) < len)
+	{
+		d.SetFailState();
+		return d;
+	}
+	memcpy(&v, buffer.Data(), len);
+	return d;
+}
+
+TEST(Tools, Serializer6)
+{
+	Serializer ser;
+	std::vector<SerFoo> vec = {
+		{1, 1.1},
+		{2, 2.2},
+		{3, 3.3},
+	};
+
+	ser << vec;
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	vec.clear();
+	de >> vec;
+
+	ASSERT_EQ(vec.size(), 3);
+	ASSERT_EQ(vec[0].a, 1);
+	ASSERT_DOUBLE_EQ(vec[0].d, 1.1);
+}
+
+#include "tools/buffer.hpp"
+TEST(Tools, Buffer)
+{
+	Buffer buffer;
+	std::string hello = "hello";
+	while (buffer.Size() < hello.size())
+	{
+		buffer.Reallocate();
+	}
+	strncpy(buffer.Data(), hello.c_str(), hello.size());
+
+	ASSERT_STREQ(buffer.Data(), "hello");
 }
 
 /*
