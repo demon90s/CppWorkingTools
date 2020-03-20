@@ -265,6 +265,33 @@ DeSerializer& operator>>(DeSerializer &d, std::vector<T> &v)
 	return d;
 }
 
+#include <list>
+template<typename T>
+Serializer& operator<<(Serializer &s, const std::list<T> &v)
+{
+	int len = static_cast<int>(v.size());
+	s << len;
+	for (const auto &item : v)
+	{
+		s << item;
+	}
+	return s;
+}
+
+template<typename T>
+DeSerializer& operator>>(DeSerializer &d, std::list<T> &v)
+{
+	int len;
+	d >> len;
+	for (int i = 0; i < len; i++)
+	{
+		T item {};
+		if (d >> item)
+			v.push_back(item);
+	}
+	return d;
+}
+
 #include <map>
 template<typename K, typename V>
 Serializer& operator<<(Serializer &s, const std::map<K, V> &v)
@@ -289,6 +316,33 @@ DeSerializer& operator>>(DeSerializer &d, std::map<K, V> &v)
 		V value;
 		d >> key >> value;
 		v[key] = value;
+	}
+	return d;
+}
+
+#include <set>
+template<typename K>
+Serializer& operator<<(Serializer &s, const std::set<K> &v)
+{
+	int len = static_cast<int>(v.size());
+	s << len;
+	for (const auto &item : v)
+	{
+		s << item;
+	}
+	return s;
+}
+
+template<typename K>
+DeSerializer& operator>>(DeSerializer &d, std::set<K> &v)
+{
+	int len;
+	d >> len;
+	for (int i = 0; i < len; i++)
+	{
+		K item {};
+		d >> item;
+		v.insert(item);
 	}
 	return d;
 }

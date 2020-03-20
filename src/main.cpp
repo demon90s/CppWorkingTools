@@ -350,7 +350,7 @@ TEST(Tools, Serializer)
 	ASSERT_TRUE(de.Eof());
 }
 
-TEST(Tools, Serializer2)
+TEST(Tools, Serializer_operator)
 {
 	Serializer ser;
 	char buffer[32] = "hello";
@@ -369,7 +369,7 @@ TEST(Tools, Serializer2)
 	ASSERT_STREQ(buffer, "hello");
 }
 
-TEST(Tools, Serializer3)
+TEST(Tools, Serializer_string)
 {
 	Serializer ser;
 	std::string s = "hello";	// 4 + 5 = 9
@@ -384,25 +384,44 @@ TEST(Tools, Serializer3)
 	ASSERT_STREQ(s.c_str(), "hello");
 }
 
-TEST(Tools, Serializer4)
+TEST(Tools, Serializer_vec_list)
 {
-	Serializer ser;
-	std::vector<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
-	ser << vi;
+	{
+		Serializer ser;
+		std::vector<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
+		ser << vi;
 
-	ASSERT_EQ(ser.Size(), 20);
+		ASSERT_EQ(ser.Size(), 20);
 
-	DeSerializer de(ser.Ptr(), ser.Size());
-	vi = {};
-	ASSERT_EQ(vi.size(), 0);
+		DeSerializer de(ser.Ptr(), ser.Size());
+		vi = {};
+		ASSERT_EQ(vi.size(), 0);
 
-	de >> vi;
+		de >> vi;
 
-	ASSERT_EQ(vi.size(), 4);
-	ASSERT_TRUE(vi[0] == 1 && vi[1] == 2 && vi[2] == 3 && vi[3] == 4);
+		ASSERT_EQ(vi.size(), 4);
+		ASSERT_TRUE(vi[0] == 1 && vi[1] == 2 && vi[2] == 3 && vi[3] == 4);
+	}
+
+	{
+		Serializer ser;
+		std::list<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
+		ser << vi;
+
+		ASSERT_EQ(ser.Size(), 20);
+
+		DeSerializer de(ser.Ptr(), ser.Size());
+		vi = {};
+		ASSERT_EQ(vi.size(), 0);
+
+		de >> vi;
+
+		ASSERT_EQ(vi.size(), 4);
+		ASSERT_TRUE(vi.front() == 1);
+	}
 }
 
-TEST(Tools, Serializer5)
+TEST(Tools, Serializer_map)
 {
 	Serializer ser;
 	std::map<int, std::string> cache =
@@ -423,6 +442,21 @@ TEST(Tools, Serializer5)
 	ASSERT_STREQ(cache[1].c_str(), "one");
 	ASSERT_STREQ(cache[2].c_str(), "two");
 	ASSERT_STREQ(cache[3].c_str(), "three");
+}
+
+TEST(Tools, Serializer_set)
+{
+	Serializer ser;
+	std::set<int> iset {1, 2, 3, 4};
+
+	ser << iset;
+
+	iset.clear();
+
+	DeSerializer de(ser.Ptr(), ser.Size());
+	de >> iset;
+
+	ASSERT_EQ(iset.size(), 4);
 }
 
 struct SerFoo
@@ -454,7 +488,7 @@ DeSerializer& operator>>(DeSerializer& d, SerFoo& v)
 	return d;
 }
 
-TEST(Tools, Serializer6)
+TEST(Tools, Serializer_Custom)
 {
 	Serializer ser;
 	std::vector<SerFoo> vec = {
