@@ -13,7 +13,12 @@ template<typename T>
 bool StringToType(const std::string &str, T &val)
 {
     std::istringstream iss(str);
-    return (iss >> val).eof();
+    if (iss >> val)
+    {
+        char c;
+        if ((iss >> c).eof()) return true;
+    }
+    return false;
 }
 template<typename T>
 bool TypeToString(const T &val, std::string &str)
