@@ -348,6 +348,22 @@ TEST(Tools, Serializer)
 
 	de.Read(a);
 	ASSERT_TRUE(de.Eof());
+
+	char userbuffer[8] {};
+	ser.SetUserBuffer(userbuffer, sizeof(userbuffer));
+	ser.Write(100, 1000);
+	ASSERT_THROW(ser.Write(999), std::runtime_error);
+
+	ASSERT_EQ(ser.Size(), 8u);
+
+	DeSerializer de2(ser.Ptr(), ser.Size());
+	de2.FetchData((char*)&a, sizeof(a));
+	ASSERT_EQ(a, 100);
+
+	int b;
+	de2 >> a >> b;
+	ASSERT_EQ(a, 100);
+	ASSERT_EQ(b, 1000);
 }
 
 TEST(Tools, Serializer_operator)

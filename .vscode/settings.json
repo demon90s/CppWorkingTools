@@ -1,4 +1,6 @@
 {
+    "astyle.cmd_options": ["--style=allman", "--indent=tab", "--align-pointer=name"]],
+
     "files.associations": {
         "cassert": "cpp",
         "stdexcept": "cpp",
