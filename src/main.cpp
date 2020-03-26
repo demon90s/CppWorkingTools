@@ -549,6 +549,31 @@ TEST(ThirdPart, STR_BKDR)
 }
 */
 
+#include "misc/upgradefunc.hpp"
+TEST(Misc, UpgradeFunc)
+{
+	long long cur_exp = 0;
+	int cur_level = 1;
+
+	const std::vector<long long> upgrade_exp_list = {
+		0, 100, 200, 500, 0
+	};//0, 1    2    3    4
+
+	int inc_exp = 350;
+	Upgrade(cur_exp, inc_exp, cur_level, upgrade_exp_list);
+
+	ASSERT_EQ(cur_level, 3);
+	ASSERT_EQ(cur_exp, 50);
+
+	Upgrade(cur_exp, 450, cur_level, upgrade_exp_list);
+
+	ASSERT_EQ(cur_level, 4);
+	ASSERT_EQ(cur_exp, 0);
+
+	bool ret = Upgrade(cur_exp, 1, cur_level, upgrade_exp_list);
+	ASSERT_FALSE(ret);
+}
+
 #include "tools/Logger.hpp"
 int main(int argc, char *argv[])
 {
