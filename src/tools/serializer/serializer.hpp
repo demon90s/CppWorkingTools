@@ -8,23 +8,52 @@ class Serializer
 	static const size_t DEFAULT_LEN = 1024;
 
 public:
-	Serializer() : m_len(DEFAULT_LEN), m_rawbuffer{}, m_buffer(nullptr), m_cur_pos(m_rawbuffer) {}
-	~Serializer() { if (m_buffer) delete []m_buffer; }
+	Serializer() :
+		m_len(DEFAULT_LEN),
+		m_rawbuffer{},
+		m_userbuffer(nullptr),
+		m_buffer(nullptr),
+		m_cur_pos(m_rawbuffer)
+	{
+	}
+	~Serializer()
+	{
+		if (m_buffer) delete []m_buffer;
+	}
+
+	void SetUserBuffer(char *userbuffer, int len)
+	{
+		m_userbuffer = userbuffer;
+		m_len = len;
+		m_cur_pos = m_userbuffer;
+	}
 
 	// 当前序列化缓冲区中的数据长度
-	size_t Size() const { return m_cur_pos - CurBuffer(); }
-	
+	size_t Size() const
+	{
+		return m_cur_pos - CurBuffer();
+	}
+
 	// 缓冲区地址
-	const char* Ptr() const { return CurBuffer(); }
+	const char *Ptr() const
+	{
+		return CurBuffer();
+	}
+
+	// 写位置
+	const char *WritePos() const
+	{
+		return m_cur_pos;
+	}
 
 	template<typename T>
 	void Write(const T &v)
 	{
-		WriteData((const char*)&v, sizeof(v));
+		WriteData((const char *)&v, sizeof(v));
 	}
 
 	template<typename T, typename... Args>
-	void Write(const T &v, const Args&... rest)
+	void Write(const T &v, const Args &... rest)
 	{
 		Write(v);
 		Write(rest...);
@@ -42,21 +71,27 @@ public:
 
 private:
 	// 拒绝拷贝
-	Serializer(const Serializer&) = delete;
-	Serializer& operator=(const Serializer&) = delete;
+	Serializer(const Serializer &) = delete;
+	Serializer &operator=(const Serializer &) = delete;
 
 	const char *CurBuffer() const
 	{
-		return m_buffer ? m_buffer : m_rawbuffer;
+		if (m_userbuffer) return m_userbuffer;
+		else if (m_buffer) return m_buffer;
+		else return m_rawbuffer;
 	}
 	char *CurBuffer()
 	{
-		return const_cast<char*>(static_cast<const Serializer*>(this)->CurBuffer());
+		return const_cast<char *>(static_cast<const Serializer *>(this)->CurBuffer());
 	}
 
 	void ReAllocate()
 	{
-		char *new_buffer = new char[2 * m_len]{};
+		if (m_userbuffer)
+		{
+			throw std::runtime_error("userbuffer out of memory");
+		}
+		char *new_buffer = new char[2 * m_len] {};
 		memcpy(new_buffer, CurBuffer(), m_len);
 		m_cur_pos = new_buffer + Size();
 		delete[]m_buffer;
@@ -66,6 +101,7 @@ private:
 
 	int m_len;						// buffer长度
 	char m_rawbuffer[DEFAULT_LEN];	// 初始buffer，用完才用heap memory
+	char *m_userbuffer;				// 用户提供的buffer
 	char *m_buffer;					// 用于存储序列化数据的缓冲区，自动增长
 	char *m_cur_pos;				// 当前序列化的位置
 };
@@ -73,9 +109,10 @@ private:
 class DeSerializer
 {
 public:
-	enum class State { Fail = 0, Eof = 1 };
+	enum class State { Fail = 0, Eof = 1, };
+	enum class FetchResult { Succ = 0, Fail = 1, Eof = 2, Overflow = 3, };
 
-	DeSerializer(const char *buffer, size_t len) : 
+	DeSerializer(const char *buffer, size_t len) :
 		m_max_len(len),
 		m_buffer(buffer),
 		m_cur_pos(m_buffer),
@@ -93,35 +130,94 @@ public:
 	}
 
 	template<typename T, typename... Args>
-	void Read(T &v, Args&... rest)
+	void Read(T &v, Args &... rest)
 	{
 		Read(v);
 		Read(rest...);
 	}
 
-	void ReadData(char *data, int len)
+	void Jump(int offset)
 	{
-		if (m_cur_pos - m_buffer == m_max_len)
-		{
-			this->SetState(State::Eof);
-			return;
-		}
-		if (m_cur_pos - m_buffer + len > m_max_len)
-		{
-			throw std::overflow_error("DeSerializer::Read failed: no more data to read");
-		}
-		memcpy(data, m_cur_pos, len);
-		m_cur_pos += len;
+		m_cur_pos += offset;
 	}
 
-	bool Eof() const { return m_state_flag & (1 << static_cast<int>(State::Eof)); }
-	void SetState(State state) { m_state_flag |= (1 << static_cast<int>(state)); }
-	void SetFailState() { m_state_flag |= (1 << static_cast<int>(State::Fail)); }
+	const char *ReadPos()
+	{
+		return m_cur_pos;
+	}
+
+	// 抓取但不读取数据
+	FetchResult FetchData(char *data, int len)
+	{
+		if (m_state_flag != 0)
+		{
+			return FetchResult::Fail;
+		}
+
+		if (m_cur_pos - m_buffer == m_max_len)
+		{
+			return FetchResult::Eof;
+		}
+
+		if (m_cur_pos - m_buffer + len > m_max_len)
+		{
+			return FetchResult::Overflow;
+		}
+
+		memcpy(data, m_cur_pos, len);
+		return FetchResult::Succ;
+	}
+
+	void ReadData(char *data, int len)
+	{
+		FetchResult res = this->FetchData(data, len);
+
+		switch (res)
+		{
+		case FetchResult::Fail:
+		{
+		}
+		break;
+
+		case FetchResult::Eof:
+		{
+			m_state_flag |= (1 << static_cast<int>(State::Eof));
+		}
+		break;
+
+		case FetchResult::Overflow:
+		{
+			this->SetFailState();
+			throw std::overflow_error("DeSerializer::ReadData failed: no more data to read");
+		}
+		break;
+
+		case FetchResult::Succ:
+		{
+			m_cur_pos += len;
+		}
+		break;
+		}
+	}
+
+	bool Fail() const
+	{
+		return m_state_flag & (1 << static_cast<int>(State::Fail));
+	}
+
+	bool Eof() const
+	{
+		return m_state_flag & (1 << static_cast<int>(State::Eof));
+	}
+
+	void SetFailState()
+	{
+		m_state_flag |= (1 << static_cast<int>(State::Fail));
+	}
 
 private:
-	// 拒绝拷贝
-	DeSerializer(const DeSerializer&) = delete;
-	DeSerializer& operator=(const DeSerializer&) = delete;
+	DeSerializer(const DeSerializer &) = delete;
+	DeSerializer &operator=(const DeSerializer &) = delete;
 
 	const int m_max_len;			// buffer最大长度
 	const char *const m_buffer;		// 用于反序列化数据的缓冲区
@@ -129,104 +225,124 @@ private:
 	unsigned int m_state_flag;		// 状态标记
 };
 
-inline Serializer& operator<<(Serializer &s, signed char v)
+inline Serializer &operator<<(Serializer &s, signed char v)
 {
-	s.Write(v); return s;
+	s.Write(v);
+	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, signed char &v)
+inline DeSerializer &operator>>(DeSerializer &d, signed char &v)
 {
-	d.Read(v); return d;
-}
-
-inline Serializer& operator<<(Serializer &s, unsigned char v)
-{
-	s.Write(v); return s;
-}
-inline DeSerializer& operator>>(DeSerializer &d, unsigned char &v)
-{
-	d.Read(v); return d;
+	d.Read(v);
+	return d;
 }
 
-inline Serializer& operator<<(Serializer &s, short v)
+inline Serializer &operator<<(Serializer &s, unsigned char v)
 {
-	s.Write(v); return s;
+	s.Write(v);
+	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, short &v)
+inline DeSerializer &operator>>(DeSerializer &d, unsigned char &v)
 {
-	d.Read(v); return d;
-}
-
-inline Serializer& operator<<(Serializer &s, unsigned short v)
-{
-	s.Write(v); return s;
-}
-inline DeSerializer& operator>>(DeSerializer &d, unsigned short &v)
-{
-	d.Read(v); return d;
+	d.Read(v);
+	return d;
 }
 
-inline Serializer& operator<<(Serializer &s, int v)
+inline Serializer &operator<<(Serializer &s, short v)
 {
-	s.Write(v); return s;
+	s.Write(v);
+	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, int &v)
+inline DeSerializer &operator>>(DeSerializer &d, short &v)
 {
-	d.Read(v); return d;
-}
-
-inline Serializer& operator<<(Serializer &s, unsigned int v)
-{
-	s.Write(v); return s;
-}
-inline DeSerializer& operator>>(DeSerializer& d, unsigned int& v)
-{
-	d.Read(v); return d;
+	d.Read(v);
+	return d;
 }
 
-inline Serializer& operator<<(Serializer &s, long long v)
+inline Serializer &operator<<(Serializer &s, unsigned short v)
 {
-	s.Write(v); return s;
+	s.Write(v);
+	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, long long &v)
+inline DeSerializer &operator>>(DeSerializer &d, unsigned short &v)
 {
-	d.Read(v); return d;
-}
-
-inline Serializer& operator<<(Serializer &s, unsigned long long v)
-{
-	s.Write(v); return s;
-}
-inline DeSerializer& operator>>(DeSerializer &d, unsigned long long &v)
-{
-	d.Read(v); return d;
+	d.Read(v);
+	return d;
 }
 
-inline Serializer& operator<<(Serializer &s, float v)
+inline Serializer &operator<<(Serializer &s, int v)
 {
-	s.Write(v); return s;
+	s.Write(v);
+	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, float& v)
+inline DeSerializer &operator>>(DeSerializer &d, int &v)
 {
-	d.Read(v); return d;
-}
-
-inline Serializer& operator<<(Serializer &s, double v)
-{
-	s.Write(v); return s;
-}
-inline DeSerializer& operator>>(DeSerializer &d, double &v)
-{
-	d.Read(v); return d;
+	d.Read(v);
+	return d;
 }
 
-inline Serializer& operator<<(Serializer &s, const char *v)
+inline Serializer &operator<<(Serializer &s, unsigned int v)
+{
+	s.Write(v);
+	return s;
+}
+inline DeSerializer &operator>>(DeSerializer &d, unsigned int &v)
+{
+	d.Read(v);
+	return d;
+}
+
+inline Serializer &operator<<(Serializer &s, long long v)
+{
+	s.Write(v);
+	return s;
+}
+inline DeSerializer &operator>>(DeSerializer &d, long long &v)
+{
+	d.Read(v);
+	return d;
+}
+
+inline Serializer &operator<<(Serializer &s, unsigned long long v)
+{
+	s.Write(v);
+	return s;
+}
+inline DeSerializer &operator>>(DeSerializer &d, unsigned long long &v)
+{
+	d.Read(v);
+	return d;
+}
+
+inline Serializer &operator<<(Serializer &s, float v)
+{
+	s.Write(v);
+	return s;
+}
+inline DeSerializer &operator>>(DeSerializer &d, float &v)
+{
+	d.Read(v);
+	return d;
+}
+
+inline Serializer &operator<<(Serializer &s, double v)
+{
+	s.Write(v);
+	return s;
+}
+inline DeSerializer &operator>>(DeSerializer &d, double &v)
+{
+	d.Read(v);
+	return d;
+}
+
+inline Serializer &operator<<(Serializer &s, const char *v)
 {
 	int len = static_cast<int>(strlen(v));
 	s << len;
-	s.WriteData(v, len); 
+	s.WriteData(v, len);
 	return s;
 }
-inline DeSerializer& operator>>(DeSerializer &d, char *v)
+inline DeSerializer &operator>>(DeSerializer &d, char *v)
 {
 	int len;
 	d.Read(len);
@@ -235,12 +351,12 @@ inline DeSerializer& operator>>(DeSerializer &d, char *v)
 }
 
 #include <string>
-Serializer& operator<<(Serializer &s, const std::string &v);
-DeSerializer& operator>>(DeSerializer &d, std::string &v);
+Serializer &operator<<(Serializer &s, const std::string &v);
+DeSerializer &operator>>(DeSerializer &d, std::string &v);
 
 #include <vector>
 template<typename T>
-Serializer& operator<<(Serializer &s, const std::vector<T> &v)
+Serializer &operator<<(Serializer &s, const std::vector<T> &v)
 {
 	int len = static_cast<int>(v.size());
 	s << len;
@@ -252,7 +368,7 @@ Serializer& operator<<(Serializer &s, const std::vector<T> &v)
 }
 
 template<typename T>
-DeSerializer& operator>>(DeSerializer &d, std::vector<T> &v)
+DeSerializer &operator>>(DeSerializer &d, std::vector<T> &v)
 {
 	int len;
 	d >> len;
@@ -267,7 +383,7 @@ DeSerializer& operator>>(DeSerializer &d, std::vector<T> &v)
 
 #include <list>
 template<typename T>
-Serializer& operator<<(Serializer &s, const std::list<T> &v)
+Serializer &operator<<(Serializer &s, const std::list<T> &v)
 {
 	int len = static_cast<int>(v.size());
 	s << len;
@@ -279,7 +395,7 @@ Serializer& operator<<(Serializer &s, const std::list<T> &v)
 }
 
 template<typename T>
-DeSerializer& operator>>(DeSerializer &d, std::list<T> &v)
+DeSerializer &operator>>(DeSerializer &d, std::list<T> &v)
 {
 	int len;
 	d >> len;
@@ -294,7 +410,7 @@ DeSerializer& operator>>(DeSerializer &d, std::list<T> &v)
 
 #include <map>
 template<typename K, typename V>
-Serializer& operator<<(Serializer &s, const std::map<K, V> &v)
+Serializer &operator<<(Serializer &s, const std::map<K, V> &v)
 {
 	int len = static_cast<int>(v.size());
 	s << len;
@@ -306,7 +422,7 @@ Serializer& operator<<(Serializer &s, const std::map<K, V> &v)
 }
 
 template<typename K, typename V>
-DeSerializer& operator>>(DeSerializer &d, std::map<K, V> &v)
+DeSerializer &operator>>(DeSerializer &d, std::map<K, V> &v)
 {
 	int len;
 	d >> len;
@@ -322,7 +438,7 @@ DeSerializer& operator>>(DeSerializer &d, std::map<K, V> &v)
 
 #include <set>
 template<typename K>
-Serializer& operator<<(Serializer &s, const std::set<K> &v)
+Serializer &operator<<(Serializer &s, const std::set<K> &v)
 {
 	int len = static_cast<int>(v.size());
 	s << len;
@@ -334,7 +450,7 @@ Serializer& operator<<(Serializer &s, const std::set<K> &v)
 }
 
 template<typename K>
-DeSerializer& operator>>(DeSerializer &d, std::set<K> &v)
+DeSerializer &operator>>(DeSerializer &d, std::set<K> &v)
 {
 	int len;
 	d >> len;

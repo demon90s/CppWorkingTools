@@ -31,15 +31,15 @@ TEST(stringcommon, Format)
 TEST(stringcommon, Split)
 {
 	std::vector<std::string> splits = stringcommon::Split("hello:world:123:3.14", ":");
-	ASSERT_EQ(splits.size(), 4);
+	ASSERT_EQ(static_cast<int>(splits.size()), 4);
 	ASSERT_STREQ(splits[0].c_str(), "hello");
 	ASSERT_STREQ(splits[2].c_str(), "123");
 
 	splits = stringcommon::Split("1:2:3:", ":");
-	ASSERT_EQ(splits.size(), 3);
+	ASSERT_EQ(splits.size(), 3u);
 
 	splits = stringcommon::Split("::123:", ":");
-	ASSERT_EQ(splits.size(), 3);
+	ASSERT_EQ(splits.size(), 3u);
 }
 
 #include "configstruct/attributepairconfig.hpp"
@@ -53,7 +53,7 @@ TEST(Test_AttributePairConfig, test1)
 		ASSERT_TRUE(iss >> config);
 
 		const auto& pair_list = config.GetPairList();
-		ASSERT_EQ(pair_list.size(), 2);
+		ASSERT_EQ(pair_list.size(), 2u);
 
 		ASSERT_TRUE(pair_list[0].attr_str == "gongji" && pair_list[0].attr_value == 1000);
 		ASSERT_TRUE(pair_list[1].attr_str == "fangyu" && pair_list[1].attr_value == 2000);
@@ -67,7 +67,7 @@ TEST(Test_AttributePairConfig, test1)
 		ASSERT_TRUE(iss >> config);
 
 		const auto& pair_list = config.GetPairList();
-		ASSERT_EQ(pair_list.size(), 1);
+		ASSERT_EQ(pair_list.size(), 1u);
 
 		ASSERT_TRUE(pair_list[0].attr_str == "gongji" && pair_list[0].attr_value == 1000);
 	}
@@ -335,7 +335,7 @@ TEST(Tools, Serializer)
 	char buffer[32] = "hello";
 	ser.Write(42, 3.14, buffer);	 // 4 + 8 + 32 = 44
 
-	ASSERT_EQ(ser.Size(), 44);
+	ASSERT_EQ(ser.Size(), 44u);
 
 	DeSerializer de(ser.Ptr(), ser.Size());
 	int a;
@@ -348,6 +348,22 @@ TEST(Tools, Serializer)
 
 	de.Read(a);
 	ASSERT_TRUE(de.Eof());
+
+	char userbuffer[8] {};
+	ser.SetUserBuffer(userbuffer, sizeof(userbuffer));
+	ser.Write(100, 1000);
+	ASSERT_THROW(ser.Write(999), std::runtime_error);
+
+	ASSERT_EQ(ser.Size(), 8u);
+
+	DeSerializer de2(ser.Ptr(), ser.Size());
+	de2.FetchData((char*)&a, sizeof(a));
+	ASSERT_EQ(a, 100);
+
+	int b;
+	de2 >> a >> b;
+	ASSERT_EQ(a, 100);
+	ASSERT_EQ(b, 1000);
 }
 
 TEST(Tools, Serializer_operator)
@@ -356,7 +372,7 @@ TEST(Tools, Serializer_operator)
 	char buffer[32] = "hello";
 	ser << 42 << 3.14 << buffer;	// 4 + 8 + (4+5) = 21
 
-	ASSERT_EQ(ser.Size(), 21);
+	ASSERT_EQ(ser.Size(), 21u);
 
 	DeSerializer de(ser.Ptr(), ser.Size());
 	int a;
@@ -375,7 +391,7 @@ TEST(Tools, Serializer_string)
 	std::string s = "hello";	// 4 + 5 = 9
 	ser << s;
 
-	ASSERT_EQ(ser.Size(), 9);
+	ASSERT_EQ(ser.Size(), 9u);
 
 	DeSerializer de(ser.Ptr(), ser.Size());
 	s = "";
@@ -391,15 +407,15 @@ TEST(Tools, Serializer_vec_list)
 		std::vector<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
 		ser << vi;
 
-		ASSERT_EQ(ser.Size(), 20);
+		ASSERT_EQ(ser.Size(), 20u);
 
 		DeSerializer de(ser.Ptr(), ser.Size());
 		vi = {};
-		ASSERT_EQ(vi.size(), 0);
+		ASSERT_EQ(vi.size(), 0u);
 
 		de >> vi;
 
-		ASSERT_EQ(vi.size(), 4);
+		ASSERT_EQ(vi.size(), 4u);
 		ASSERT_TRUE(vi[0] == 1 && vi[1] == 2 && vi[2] == 3 && vi[3] == 4);
 	}
 
@@ -408,15 +424,15 @@ TEST(Tools, Serializer_vec_list)
 		std::list<int> vi {1, 2, 3, 4}; // 4 + 4 * 4 = 20
 		ser << vi;
 
-		ASSERT_EQ(ser.Size(), 20);
+		ASSERT_EQ(ser.Size(), 20u);
 
 		DeSerializer de(ser.Ptr(), ser.Size());
 		vi = {};
-		ASSERT_EQ(vi.size(), 0);
+		ASSERT_EQ(vi.size(), 0u);
 
 		de >> vi;
 
-		ASSERT_EQ(vi.size(), 4);
+		ASSERT_EQ(vi.size(), 4u);
 		ASSERT_TRUE(vi.front() == 1);
 	}
 }
@@ -432,13 +448,13 @@ TEST(Tools, Serializer_map)
 	};
 	ser << cache; // 4 + (4+4+3) + (4+4+3) + (4+4+5) = 39
 
-	ASSERT_EQ(ser.Size(), 39);
+	ASSERT_EQ(ser.Size(), 39u);
 
 	DeSerializer de(ser.Ptr(), ser.Size());
 	cache.clear();
 	de >> cache;
 
-	ASSERT_EQ(cache.size(), 3);
+	ASSERT_EQ(cache.size(), 3u);
 	ASSERT_STREQ(cache[1].c_str(), "one");
 	ASSERT_STREQ(cache[2].c_str(), "two");
 	ASSERT_STREQ(cache[3].c_str(), "three");
@@ -456,7 +472,7 @@ TEST(Tools, Serializer_set)
 	DeSerializer de(ser.Ptr(), ser.Size());
 	de >> iset;
 
-	ASSERT_EQ(iset.size(), 4);
+	ASSERT_EQ(iset.size(), 4u);
 }
 
 struct SerFoo
@@ -503,7 +519,7 @@ TEST(Tools, Serializer_Custom)
 	vec.clear();
 	de >> vec;
 
-	ASSERT_EQ(vec.size(), 3);
+	ASSERT_EQ(vec.size(), 3u);
 	ASSERT_EQ(vec[0].a, 1);
 	ASSERT_DOUBLE_EQ(vec[0].d, 1.1);
 }
@@ -533,6 +549,32 @@ TEST(ThirdPart, STR_BKDR)
 }
 */
 
+#include "misc/upgradefunc.hpp"
+TEST(Misc, UpgradeFunc)
+{
+	long long cur_exp = 0;
+	int cur_level = 1;
+
+	const std::vector<long long> upgrade_exp_list = {
+		0, 100, 200, 500, 0
+	};//0, 1    2    3    4
+
+	int inc_exp = 350;
+	Upgrade(cur_exp, inc_exp, cur_level, upgrade_exp_list);
+
+	ASSERT_EQ(cur_level, 3);
+	ASSERT_EQ(cur_exp, 50);
+
+	Upgrade(cur_exp, 450, cur_level, upgrade_exp_list);
+
+	ASSERT_EQ(cur_level, 4);
+	ASSERT_EQ(cur_exp, 0);
+
+	bool ret = Upgrade(cur_exp, 1, cur_level, upgrade_exp_list);
+	ASSERT_FALSE(ret);
+}
+
+#include "tools/Logger.hpp"
 int main(int argc, char *argv[])
 {
 	testing::InitGoogleTest(&argc, argv);
