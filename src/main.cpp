@@ -575,31 +575,29 @@ TEST(Misc, UpgradeFunc)
 }
 
 #include "tools/eventhandler.hpp"
-static void HelloEventFoo(void *pthis, DeSerializer &ds);
-
 struct EventFoo
 {
 	EventFoo()
 	{
-		EventHandler::Instance().RegisterEvent("EventFoo::Hello", { this, HelloEventFoo });
+		EventHandler::Instance().RegisterEvent("TestEvent2", { this, TestEvent2 });
 	}
 
 	~EventFoo()
 	{
-		EventHandler::Instance().UnRegisterEvent("EventFoo::Hello", this);
+		EventHandler::Instance().UnRegisterEvent("TestEvent2", this);
 	}
 
-	void Hello(const std::string &msg)
+	static void TestEvent2(void *pthis, DeSerializer &ds)
 	{
-		std::cout << "Foo::Hello: " << msg << std::endl;
-	}
-};
+		std::string msg;
+		if (ds >> msg)
+			static_cast<EventFoo*>(pthis)->OnTestEvent2(msg);
+	};
 
-static void HelloEventFoo(void *pthis, DeSerializer &ds)
-{
-	std::string msg;
-	if (ds >> msg)
-		static_cast<EventFoo*>(pthis)->Hello(msg);
+	void OnTestEvent2(const std::string &msg)
+	{
+		std::cout << "Foo::OnTestEvent2: " << msg << std::endl;
+	}
 };
 
 TEST(Tools, EventHandler)
@@ -616,9 +614,9 @@ TEST(Tools, EventHandler)
 
 	{
 		EventFoo event_foo;
-		EventHandler::Instance().Dispatch("EventFoo::Hello", "hi event");
+		EventHandler::Instance().Dispatch("TestEvent2", "hi every obj");
 	}
-	EventHandler::Instance().Dispatch("EventFoo::Hello", "hi event impossible");
+	EventHandler::Instance().Dispatch("TestEvent2", "hi event impossible");
 }
 
 #include "tools/Logger.hpp"

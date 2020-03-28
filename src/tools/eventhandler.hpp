@@ -7,7 +7,7 @@
 class EventHandler
 {
 public:
-    using EventFunc = std::function<void(void *target, DeSerializer &ds)>;
+    using EventFunc = std::function<void(void *target, DeSerializer &param)>;
 
     struct EventItem
     {

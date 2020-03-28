@@ -46,10 +46,10 @@ auto GetRandItem(const Container &draw_pool, std::function<int(decltype(*std::be
     int total_weight = 0;
     for (const auto &item : draw_pool)
     {
-        total_weight += get_item_weight(draw_item);
+        total_weight += get_item_weight(item);
     }
 
-    int rand_num = RandomNum(total_weight);
+    int rand_num = RandomNum(0, total_weight);
     auto it = std::begin(draw_pool);
     for (; it != std::end(draw_pool); ++it)
     {
