@@ -13,7 +13,7 @@ Serializer& operator<<(Serializer &s, const std::string &v)
 
 DeSerializer& operator>>(DeSerializer &d, std::string &v)
 {
-	int len;
+	int len = 0;
 	d >> len;
 
     Buffer buffer;

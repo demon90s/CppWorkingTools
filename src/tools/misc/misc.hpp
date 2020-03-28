@@ -37,6 +37,35 @@ bool IsNumber(const char* v, double* d = nullptr);
 // 取随机整数值，取值范围是[beg, end)
 int RandomNum(int beg, int end);
 
+// 获取随机项，每个项目提供一个获取其权重的方法
+#include <functional>
+template<typename Container>
+auto GetRandItem(const Container &draw_pool, std::function<int(decltype(*std::begin(draw_pool)))> get_item_weight)
+    -> decltype(std::begin(draw_pool))
+{
+    int total_weight = 0;
+    for (const auto &item : draw_pool)
+    {
+        total_weight += get_item_weight(draw_item);
+    }
+
+    int rand_num = RandomNum(total_weight);
+    auto it = std::begin(draw_pool);
+    for (; it != std::end(draw_pool); ++it)
+    {
+        int item_weight = get_item_weight(*it);
+        if (rand_num < item_weight)
+        {
+            break;
+        }
+        else
+        {
+            rand_num -= item_weight;
+        }
+    }
+    return it;
+}
+
 // 两个int与一个long long之间的转换
 long long ConvertParamToLongLong(int param_0, int param_1);
 void ParseParamFromLongLong(long long key, int* param_0, int* param_1);

@@ -21,6 +21,11 @@ public:
 		if (m_buffer) delete []m_buffer;
 	}
 
+	void ResetPos()
+	{
+		m_cur_pos = CurBuffer();
+	}
+
 	void SetUserBuffer(char *userbuffer, int len)
 	{
 		m_userbuffer = userbuffer;
@@ -141,7 +146,7 @@ public:
 		m_cur_pos += offset;
 	}
 
-	const char *ReadPos()
+	const char *ReadPos() const
 	{
 		return m_cur_pos;
 	}
@@ -344,7 +349,7 @@ inline Serializer &operator<<(Serializer &s, const char *v)
 }
 inline DeSerializer &operator>>(DeSerializer &d, char *v)
 {
-	int len;
+	int len = 0;
 	d.Read(len);
 	d.ReadData(v, len);
 	return d;
@@ -370,7 +375,7 @@ Serializer &operator<<(Serializer &s, const std::vector<T> &v)
 template<typename T>
 DeSerializer &operator>>(DeSerializer &d, std::vector<T> &v)
 {
-	int len;
+	int len = 0;
 	d >> len;
 	for (int i = 0; i < len; i++)
 	{
@@ -397,7 +402,7 @@ Serializer &operator<<(Serializer &s, const std::list<T> &v)
 template<typename T>
 DeSerializer &operator>>(DeSerializer &d, std::list<T> &v)
 {
-	int len;
+	int len = 0;
 	d >> len;
 	for (int i = 0; i < len; i++)
 	{
@@ -424,7 +429,7 @@ Serializer &operator<<(Serializer &s, const std::map<K, V> &v)
 template<typename K, typename V>
 DeSerializer &operator>>(DeSerializer &d, std::map<K, V> &v)
 {
-	int len;
+	int len = 0;
 	d >> len;
 	for (int i = 0; i < len; i++)
 	{
@@ -452,7 +457,7 @@ Serializer &operator<<(Serializer &s, const std::set<K> &v)
 template<typename K>
 DeSerializer &operator>>(DeSerializer &d, std::set<K> &v)
 {
-	int len;
+	int len = 0;
 	d >> len;
 	for (int i = 0; i < len; i++)
 	{

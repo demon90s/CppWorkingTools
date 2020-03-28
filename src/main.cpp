@@ -574,6 +574,53 @@ TEST(Misc, UpgradeFunc)
 	ASSERT_FALSE(ret);
 }
 
+#include "tools/eventhandler.hpp"
+static void HelloEventFoo(void *pthis, DeSerializer &ds);
+
+struct EventFoo
+{
+	EventFoo()
+	{
+		EventHandler::Instance().RegisterEvent("EventFoo::Hello", { this, HelloEventFoo });
+	}
+
+	~EventFoo()
+	{
+		EventHandler::Instance().UnRegisterEvent("EventFoo::Hello", this);
+	}
+
+	void Hello(const std::string &msg)
+	{
+		std::cout << "Foo::Hello: " << msg << std::endl;
+	}
+};
+
+static void HelloEventFoo(void *pthis, DeSerializer &ds)
+{
+	std::string msg;
+	if (ds >> msg)
+		static_cast<EventFoo*>(pthis)->Hello(msg);
+};
+
+TEST(Tools, EventHandler)
+{
+	EventHandler::EventItem event_item = { nullptr, [](void *none, DeSerializer &ds){ 
+		int a = 0;
+		double d = 3.14;
+		if (ds >> a >> d)
+			std::cout << "This is a test from EventHandler " << a << " " << d << "\n"; 
+	} };
+	EventHandler::Instance().RegisterEvent("TestEvent", event_item);
+
+	EventHandler::Instance().Dispatch("TestEvent", 42, 3.14);
+
+	{
+		EventFoo event_foo;
+		EventHandler::Instance().Dispatch("EventFoo::Hello", "hi event");
+	}
+	EventHandler::Instance().Dispatch("EventFoo::Hello", "hi event impossible");
+}
+
 #include "tools/Logger.hpp"
 int main(int argc, char *argv[])
 {
