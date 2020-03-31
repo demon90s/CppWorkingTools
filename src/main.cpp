@@ -3,45 +3,6 @@
 #include <memory>
 #include "gtest/gtest.h"
 
-#include "stringcommon/stringcommon.hpp"
-TEST(stringcommon, Trim)
-{
-	std::string str = "hello";
-	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello");
-	
-	str = " hello";
-	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello");
-
-	str = "   hello  ";
-	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello");
-
-	str = "";
-	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "");
-
-	str = "hello world   ";
-	ASSERT_STREQ(stringcommon::Trim(str).c_str(), "hello world");
-}
-
-TEST(stringcommon, Format)
-{
-	std::string s = stringcommon::Format("hello, x=%d, y=%g", 42, 3.14);
-	ASSERT_STREQ(s.c_str(), "hello, x=42, y=3.14");
-}
-
-TEST(stringcommon, Split)
-{
-	std::vector<std::string> splits = stringcommon::Split("hello:world:123:3.14", ":");
-	ASSERT_EQ(static_cast<int>(splits.size()), 4);
-	ASSERT_STREQ(splits[0].c_str(), "hello");
-	ASSERT_STREQ(splits[2].c_str(), "123");
-
-	splits = stringcommon::Split("1:2:3:", ":");
-	ASSERT_EQ(splits.size(), 3u);
-
-	splits = stringcommon::Split("::123:", ":");
-	ASSERT_EQ(splits.size(), 3u);
-}
-
 #include "configstruct/attributepairconfig.hpp"
 TEST(Test_AttributePairConfig, test1)
 {
@@ -52,13 +13,13 @@ TEST(Test_AttributePairConfig, test1)
 		AttributePairConfig config;
 		ASSERT_TRUE(iss >> config);
 
-		const auto& pair_list = config.GetPairList();
+		const auto &pair_list = config.GetPairList();
 		ASSERT_EQ(pair_list.size(), 2u);
 
 		ASSERT_TRUE(pair_list[0].attr_str == "gongji" && pair_list[0].attr_value == 1000);
 		ASSERT_TRUE(pair_list[1].attr_str == "fangyu" && pair_list[1].attr_value == 2000);
 	}
-	
+
 	{
 		std::string config_str = "   gongji =  1000";
 		std::istringstream iss(config_str);
@@ -66,7 +27,7 @@ TEST(Test_AttributePairConfig, test1)
 		AttributePairConfig config;
 		ASSERT_TRUE(iss >> config);
 
-		const auto& pair_list = config.GetPairList();
+		const auto &pair_list = config.GetPairList();
 		ASSERT_EQ(pair_list.size(), 1u);
 
 		ASSERT_TRUE(pair_list[0].attr_str == "gongji" && pair_list[0].attr_value == 1000);
@@ -190,19 +151,19 @@ TEST(Test_FixLenRankList, test1)
 {
 	FixLenRankList<int, 10> ranklist;
 
-    ranklist.Push(10);
-    ranklist.Push(20);
-    ranklist.Push(5);
-    ranklist.Push(20);
+	ranklist.Push(10);
+	ranklist.Push(20);
+	ranklist.Push(5);
+	ranklist.Push(20);
 
-    std::vector<int> top = ranklist.GetTopList(1);
-    EXPECT_EQ(20, top[0]);
+	std::vector<int> top = ranklist.GetTopList(1);
+	EXPECT_EQ(20, top[0]);
 
-    for (int i = 0; i < 50; i++)
-    {
-        ranklist.Push(i);
-    }
-    EXPECT_EQ(49, ranklist.GetTop());
+	for (int i = 0; i < 50; i++)
+	{
+		ranklist.Push(i);
+	}
+	EXPECT_EQ(49, ranklist.GetTop());
 }
 
 TEST(Test_FixLenRankList, test2)
@@ -215,7 +176,7 @@ TEST(Test_FixLenRankList, test2)
 			value(0)
 		{
 		}
-		Foo(int _id, int _value) : 
+		Foo(int _id, int _value) :
 			id(_id),
 			value(_value)
 		{
@@ -233,47 +194,47 @@ TEST(Test_FixLenRankList, test2)
 		int value;
 	};
 
-    FixLenRankList<Foo, 5> ranklist;
+	FixLenRankList<Foo, 5> ranklist;
 
-    ranklist.Push(Foo(0, 30));
-    ranklist.Push(Foo(1, 10));  // pass
-    ranklist.Push(Foo(2, 11));
-    ranklist.Push(Foo(3, 22));
-    ranklist.Push(Foo(4, 11));
-    ranklist.Push(Foo(4, 9));   // pass
-    ranklist.Push(Foo(4, 100));
+	ranklist.Push(Foo(0, 30));
+	ranklist.Push(Foo(1, 10));  // pass
+	ranklist.Push(Foo(2, 11));
+	ranklist.Push(Foo(3, 22));
+	ranklist.Push(Foo(4, 11));
+	ranklist.Push(Foo(4, 9));   // pass
+	ranklist.Push(Foo(4, 100));
 
-    const auto &top = ranklist.GetTop();
-    EXPECT_EQ(top.id, 4);
+	const auto &top = ranklist.GetTop();
+	EXPECT_EQ(top.id, 4);
 }
 
 #include "fixlencontainer/fixlenstr.hpp"
 TEST(Test_FixLenStr, test)
 {
 	FixLenStr<32> str = "hello";
-    ASSERT_STREQ(str.Data(), "hello");
+	ASSERT_STREQ(str.Data(), "hello");
 
-    char raw[32];
-    str.Copy(raw);
-    ASSERT_STREQ(raw, "hello");
+	char raw[32];
+	str.Copy(raw);
+	ASSERT_STREQ(raw, "hello");
 
-    const char *raw_str = str;
-    ASSERT_STREQ(raw_str, "hello");
+	const char *raw_str = str;
+	ASSERT_STREQ(raw_str, "hello");
 
-    std::string s = str;
-    ASSERT_STREQ(s.c_str(), "hello");
+	std::string s = str;
+	ASSERT_STREQ(s.c_str(), "hello");
 
-    FixLenStr<5> str2 = s;
-    ASSERT_STRNE(str2, "hello");
+	FixLenStr<5> str2 = s;
+	ASSERT_STRNE(str2, "hello");
 	ASSERT_STREQ(str2, "hell");
 
-    str = str;
-    ASSERT_STREQ(str, "hello");
+	str = str;
+	ASSERT_STREQ(str, "hello");
 
-    str = str.Data();
-    ASSERT_STREQ(str, "hello");
+	str = str.Data();
+	ASSERT_STREQ(str, "hello");
 
-    ASSERT_EQ(str.Len(), 5);
+	ASSERT_EQ(str.Len(), 5);
 }
 
 #include "tools/misc/misc.hpp"
@@ -357,7 +318,7 @@ TEST(Tools, Serializer)
 	ASSERT_EQ(ser.Size(), 8u);
 
 	DeSerializer de2(ser.Ptr(), ser.Size());
-	de2.FetchData((char*)&a, sizeof(a));
+	de2.FetchData((char *)&a, sizeof(a));
 	ASSERT_EQ(a, 100);
 
 	int b;
@@ -482,14 +443,14 @@ struct SerFoo
 };
 
 #include "tools/buffer.hpp"
-Serializer& operator<<(Serializer &s, const SerFoo &v)
+Serializer &operator<<(Serializer &s, const SerFoo &v)
 {
 	unsigned int len = sizeof(v);
 	s << len;
 	s.Write(v);
 	return s;
 }
-DeSerializer& operator>>(DeSerializer& d, SerFoo& v)
+DeSerializer &operator>>(DeSerializer &d, SerFoo &v)
 {
 	unsigned int len;
 	d >> len;
@@ -507,7 +468,8 @@ DeSerializer& operator>>(DeSerializer& d, SerFoo& v)
 TEST(Tools, Serializer_Custom)
 {
 	Serializer ser;
-	std::vector<SerFoo> vec = {
+	std::vector<SerFoo> vec =
+	{
 		{1, 1.1},
 		{2, 2.2},
 		{3, 3.3},
@@ -555,7 +517,8 @@ TEST(Misc, UpgradeFunc)
 	long long cur_exp = 0;
 	int cur_level = 1;
 
-	const std::vector<long long> upgrade_exp_list = {
+	const std::vector<long long> upgrade_exp_list =
+	{
 		0, 100, 200, 500, 0
 	};//0, 1    2    3    4
 
@@ -591,7 +554,7 @@ struct EventFoo
 	{
 		std::string msg;
 		if (ds >> msg)
-			static_cast<EventFoo*>(pthis)->OnTestEvent2(msg);
+			static_cast<EventFoo *>(pthis)->OnTestEvent2(msg);
 	};
 
 	void OnTestEvent2(const std::string &msg)
@@ -602,12 +565,14 @@ struct EventFoo
 
 TEST(Tools, EventHandler)
 {
-	EventHandler::EventItem event_item = { nullptr, [](void *none, DeSerializer &ds){ 
+	EventHandler::EventItem event_item = { nullptr, [](void *none, DeSerializer &ds)
+	{
 		int a = 0;
 		double d = 3.14;
 		if (ds >> a >> d)
-			std::cout << "This is a test from EventHandler " << a << " " << d << "\n"; 
-	} };
+			std::cout << "This is a test from EventHandler " << a << " " << d << "\n";
+	}
+	                                     };
 	EventHandler::Instance().RegisterEvent("TestEvent", event_item);
 
 	EventHandler::Instance().Dispatch("TestEvent", 42, 3.14);
@@ -624,8 +589,8 @@ int main(int argc, char *argv[])
 {
 	testing::InitGoogleTest(&argc, argv);
 
-    // only call once
-    // return 0 if all succ
-    // otherwise, not
-    return RUN_ALL_TESTS();
+	// only call once
+	// return 0 if all succ
+	// otherwise, not
+	return RUN_ALL_TESTS();
 }
