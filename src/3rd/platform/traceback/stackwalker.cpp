@@ -1157,6 +1157,14 @@ void StackWalker::OnLoadModule(LPCSTR img, LPCSTR mod, DWORD64 baseAddr, DWORD s
 
 void StackWalker::OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry, std::string *out)
 {
+    auto fetch_src = [](const std::string &full_name) -> std::string
+    {
+        auto pos = full_name.find_last_of("\\");
+        if (pos != std::string::npos)
+            return full_name.substr(pos + 1);
+        return full_name;
+    };
+
   CHAR buffer[STACKWALK_MAX_NAMELEN] = {0};
   if ( (eType != lastEntry) && (entry.offset != 0) )
   {
@@ -1178,7 +1186,7 @@ void StackWalker::OnCallstackEntry(CallstackEntryType eType, CallstackEntry &ent
 		if (out)
 		{
 			if (eType != firstEntry)
-				_snprintf_s(buffer, STACKWALK_MAX_NAMELEN, "%s\n", entry.name);
+                _snprintf_s(buffer, STACKWALK_MAX_NAMELEN, "%s (%d): %s\n", fetch_src(entry.lineFileName).c_str(), entry.lineNumber, entry.name);
 		}
 		else
 		{
