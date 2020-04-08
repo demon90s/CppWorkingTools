@@ -584,6 +584,19 @@ TEST(Tools, EventHandler)
 	EventHandler::Instance().Dispatch("TestEvent2", "hi event impossible");
 }
 
+#include "tools/Property.hpp"
+TEST(tools, Property)
+{
+	Property property;
+
+	int foo = property.GetProperty<int>("foo", -1);
+	ASSERT_EQ(foo, -1);
+
+	property.SetProperty<int>("foo", 42);
+	foo = property.GetProperty<int>("foo", -1);
+	ASSERT_EQ(foo, 42);
+}
+
 #include "tools/Logger.hpp"
 int main(int argc, char *argv[])
 {
