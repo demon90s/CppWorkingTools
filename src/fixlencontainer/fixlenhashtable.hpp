@@ -110,12 +110,21 @@ public:
             static_cast<const FixLenHashTable*>(this)->Get(key));
     }
 
-    void Travel(std::function<void(Key, Value&)> f)
+    void Travel(std::function<void(const Key&, Value&)> f)
     {
         for (int index = 0; index < Len; index++)
         {
             if (m_used_flag.Test(index))
                 f(m_data[index].key, m_data[index].value);
+        }
+    }
+
+    void TravelKey(std::function<void(const Key&)> f)
+    {
+        for (int index = 0; index < Len; index++)
+        {
+            if (m_used_flag.Test(index))
+                f(m_data[index].key);
         }
     }
 
@@ -146,4 +155,37 @@ private:
 
         return index;
     }
+};
+
+template<typename Value, int Len>
+class FixLenSet
+{
+public:
+    int Size() const
+    {
+        return m_hash_table.Size();
+    }
+
+    bool Insert(const Value &v)
+    {
+        return m_hash_table.Put(v, v);
+    }
+
+    bool Erase(const Value &v)
+    {
+        return m_hash_table.Erase(v);
+    }
+
+    bool HasValue(const Value &v) const
+    {
+        return m_hash_table.Get(v) != nullptr;
+    }
+
+    void Travel(std::function<void(const Value&)> f)
+    {
+        m_hash_table.TravelKey(f);
+    }
+
+private:
+    FixLenHashTable<Value, Value, Len> m_hash_table;
 };

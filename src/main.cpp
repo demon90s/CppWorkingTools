@@ -125,6 +125,35 @@ TEST(Test_FixLenHashTable, test)
 	ASSERT_EQ(*hash_table.Get(6), 36);
 }
 
+TEST(Test_FixLenSet, test)
+{
+	FixLenSet<int, 4> fset;
+
+	ASSERT_EQ(fset.Size(), 0);
+	ASSERT_FALSE(fset.HasValue(0));
+
+	fset.Insert(0);
+	ASSERT_TRUE(fset.HasValue(0));
+
+	ASSERT_FALSE(fset.Insert(0));
+
+	fset.Insert(2);
+	fset.Insert(4);
+	fset.Insert(6);
+
+	ASSERT_FALSE(fset.Insert(8));
+
+	ASSERT_TRUE(fset.HasValue(2));
+	fset.Erase(2);
+	ASSERT_FALSE(fset.HasValue(2));
+
+	ASSERT_FALSE(fset.HasValue(8));
+	fset.Insert(8);
+	ASSERT_TRUE(fset.HasValue(8));
+
+	ASSERT_EQ(fset.Size(), 4);
+}
+
 #include "fixlencontainer/fixlenqueue.hpp"
 TEST(Test_FixLenQueue, test)
 {

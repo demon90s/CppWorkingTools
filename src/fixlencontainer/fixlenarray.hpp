@@ -77,7 +77,7 @@ public:
         }
     }
 
-    void Travel(std::function<void(const T&)> f)
+    void ConstTravel(std::function<void(const T&)> f)
     {
         for (const auto &item : m_data)
         {
