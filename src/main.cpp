@@ -206,6 +206,10 @@ TEST(Test_FixLenRankList, test2)
 
 	const auto &top = ranklist.GetTop();
 	EXPECT_EQ(top.id, 4);
+
+	ranklist.Push(Foo(3, 1000));
+	const auto &top2 = ranklist.GetTop();
+	EXPECT_EQ(top2.id, 3);
 }
 
 #include "fixlencontainer/fixlenstr.hpp"
