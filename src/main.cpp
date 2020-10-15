@@ -630,6 +630,19 @@ TEST(tools, Property)
 	ASSERT_EQ(foo, 42);
 }
 
+#include "struct/rankvalue.hpp"
+TEST(struct, RankValue)
+{
+	RankValue rv1 = 1;
+	RankValue rv2 = 10;
+
+	ASSERT_TRUE(rv1.IsAheadOf(rv2));
+	ASSERT_TRUE(rv2.IsBehindOf(rv1));
+
+	rv2 = rv1;
+	ASSERT_TRUE(rv1.IsEqualOf(rv2));
+}
+
 #include "tools/Logger.hpp"
 int main(int argc, char *argv[])
 {

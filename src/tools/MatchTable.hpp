@@ -6,6 +6,20 @@
 #include <cstdio>
 #include <cmath>
 
+// 淘汰赛对阵表，可决出冠亚军 34名
+/*
+
+0                               4
+    1                     4
+1                               5
+        1   冠亚军   4   
+        2   3 4名    6
+2                               6
+    2                     6
+3                               7
+
+*/
+
 template<typename MatchItem>
 class MatchTable
 {
